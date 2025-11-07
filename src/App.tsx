@@ -75,8 +75,7 @@ export default function CreditApplicationSystem() {
     tenor: 36,
     monthlyPayment: 0,
   });
-
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -113,12 +112,13 @@ export default function CreditApplicationSystem() {
     }
   };
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
     const files = Array.from(e.target.files);
     setUploadedFiles((prev) => [...prev, ...files.map((f) => f.name)]);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const newApplication = {
@@ -131,7 +131,7 @@ export default function CreditApplicationSystem() {
       dp: parseFloat(formData.dp),
       tenor: formData.tenor,
       monthlyPayment: formData.monthlyPayment,
-      status: "pending",
+      status: "pending" as const,
       submittedAt: new Date().toLocaleString("id-ID"),
       documents: uploadedFiles,
     };
@@ -158,9 +158,27 @@ export default function CreditApplicationSystem() {
     setActiveTab("approval");
   };
 
-  const handleApproval = (id, action) => {
-    setApplications((prev) =>
-      prev.map((app) =>
+  interface Application {
+    id: string;
+    customerName: string;
+    nik: string;
+    phone: string;
+    vehicle: string;
+    loanAmount: number;
+    dp: number;
+    tenor: number;
+    monthlyPayment: number;
+    status: "pending" | "approved" | "rejected";
+    submittedAt: string;
+    approvedAt?: string;
+    documents: string[];
+  }
+
+  type ApprovalAction = "approved" | "rejected";
+
+  const handleApproval = (id: string, action: ApprovalAction): void => {
+    setApplications((prev: Application[]) =>
+      prev.map((app: Application) =>
         app.id === id
           ? {
               ...app,
@@ -181,7 +199,21 @@ export default function CreditApplicationSystem() {
     );
   };
 
-  const handleGenerateContract = (app) => {
+  const handleGenerateContract = (app: {
+    id: string;
+    customerName: string;
+    nik: string;
+    phone?: string;
+    vehicle: string;
+    loanAmount: number;
+    dp: number;
+    tenor: number;
+    monthlyPayment: number;
+    status?: "pending" | "approved" | "rejected";
+    submittedAt?: string;
+    approvedAt?: string | undefined;
+    documents?: string[];
+  }) => {
     const contractContent = `
 PERJANJIAN KREDIT KENDARAAN
 Nomor: ${app.id}/BCAF/2025
